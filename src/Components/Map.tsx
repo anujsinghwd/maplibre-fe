@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import maplibregl, { LngLatLike, Map as MapboxMap } from 'maplibre-gl';
+import maplibregl, { Map as MapboxMap } from 'maplibre-gl';
 import { lineString, bbox } from '@turf/turf';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import mapConfig from '../constants/map';
@@ -73,6 +73,7 @@ const Map: React.FC = () => {
             }
             removeAllMarkers();
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleDrawLine = (data: any) => {

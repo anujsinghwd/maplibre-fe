@@ -110,6 +110,7 @@ const SearchBar: React.FC<{
                 }
                 document.removeEventListener('click', handleDocumentClick);
             };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         }, [inputList, focusedInputIndex, isFocused]);
 
         /**
