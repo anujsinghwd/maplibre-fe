@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
-import maplibregl, { Map as MapboxMap } from 'maplibre-gl';
+import maplibregl, { LngLatLike, Map as MapboxMap } from 'maplibre-gl';
+import { lineString, bbox } from '@turf/turf';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import mapConfig from '../constants/map';
 import './map.css';
@@ -32,34 +33,36 @@ const Map: React.FC = () => {
             maxZoom: 22 // The maximum allowed zoom level.
         });
 
-        // Listen for the 'load' event of the map.
-        mapInstance.current.on('load', () => {
-            // Check if the mapInstance reference is valid.
-            if (mapInstance.current) {
-                // Create a GeolocateControl to enable user location tracking.
-                let geolocate = new maplibregl.GeolocateControl({
-                    positionOptions: {
-                        enableHighAccuracy: true // Enable high accuracy for geolocation.
-                    },
-                    trackUserLocation: true // Start tracking the user's location.
-                });
+        if (mapInstance.current) {
+            // Listen for the 'load' event of the map.
+            mapInstance.current.on('load', () => {
+                // Check if the mapInstance reference is valid.
+                if (mapInstance.current) {
+                    // Create a GeolocateControl to enable user location tracking.
+                    let geolocate = new maplibregl.GeolocateControl({
+                        positionOptions: {
+                            enableHighAccuracy: true // Enable high accuracy for geolocation.
+                        },
+                        trackUserLocation: true // Start tracking the user's location.
+                    });
 
-                // Add the GeolocateControl to the map.
-                mapInstance.current.addControl(geolocate);
+                    // Add the GeolocateControl to the map.
+                    mapInstance.current.addControl(geolocate);
 
-                // Create a NavigationControl instance to add navigation controls to the map.
-                let nav = new maplibregl.NavigationControl();
+                    // Create a NavigationControl instance to add navigation controls to the map.
+                    let nav = new maplibregl.NavigationControl();
 
-                // Add the NavigationControl to the map at the bottom-right corner.
-                mapInstance.current.addControl(nav, 'bottom-right');
+                    // Add the NavigationControl to the map at the bottom-right corner.
+                    mapInstance.current.addControl(nav, 'bottom-right');
 
-                let scale = new maplibregl.ScaleControl({
-                    maxWidth: 80,
-                    unit: 'imperial'
-                });
-                mapInstance.current.addControl(scale);
-            }
-        });
+                    let scale = new maplibregl.ScaleControl({
+                        maxWidth: 80,
+                        unit: 'imperial'
+                    });
+                    mapInstance.current.addControl(scale);
+                }
+            });
+        }
 
         // Clean up function to remove the map instance when the component unmounts.
         return () => {
@@ -70,10 +73,57 @@ const Map: React.FC = () => {
         };
     }, []);
 
+    const handleDrawLine = (data: any) => {
+        if (mapInstance.current) {
+            const lineFeature = lineString(data);
+            let lineSource = mapInstance.current.getSource('line-source') as maplibregl.GeoJSONSource | undefined;
+
+            if (!lineSource) {
+                mapInstance.current.addSource('line-source', {
+                    type: 'geojson',
+                    data: lineFeature
+                });
+
+                mapInstance.current.addLayer({
+                    id: 'line-layer',
+                    type: 'line',
+                    source: 'line-source',
+                    paint: {
+                        'line-color': '#0074D9',
+                        'line-width': 2
+                    }
+                });
+            } else {
+                lineSource.setData(lineFeature);
+            }
+            data.forEach((element: LngLatLike) => {
+                if (mapInstance.current) {
+                    new maplibregl.Marker()
+                        .setLngLat(element)
+                        .addTo(mapInstance.current);
+                }
+            });
+
+            const boundingBox = bbox(lineFeature);
+            // Convert bounding box coordinates to LngLatBounds
+            const bounds = new maplibregl.LngLatBounds(
+                [boundingBox[0], boundingBox[1]], // [minX, minY]
+                [boundingBox[2], boundingBox[3]]  // [maxX, maxY]
+            );
+
+            // Fit the map to the calculated bounding box
+            mapInstance.current.fitBounds(bounds, {
+                padding: 20, // Adjust padding as needed
+                animate: true // Whether to use animation while fitting the bounds
+            });
+
+        }
+    }
+
     return (
         <div>
             <div ref={mapContainer} className="map-container" data-testid="map-container" />
-            <SearchBar map={mapInstance.current!} /> {/* Add the SearchBar component */}
+            <SearchBar handleDrawLine={handleDrawLine} map={mapInstance.current!} /> {/* Add the SearchBar component */}
         </div>
 
     );

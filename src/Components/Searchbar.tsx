@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faAdd, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { FaLocationDot } from "react-icons/fa6";
+import { AiFillPlusCircle, AiFillCloseCircle } from "react-icons/ai";
 import './SearchBar.css';
 
 /**
@@ -11,30 +11,55 @@ import './SearchBar.css';
  *
  * @param {Object} map - The MapLibre map instance.
  */
-const SearchBar: React.FC<{ map: maplibregl.Map }> = ({ map }) => {
-    const [query, setQuery] = useState('');
+const SearchBar: React.FC<{ map: maplibregl.Map, handleDrawLine: any }> = ({ map, handleDrawLine }) => {
     const [suggestions, setSuggestions] = useState<string[]>([]);
-    const searchInputRef = useRef<HTMLInputElement | null>(null);
     const debounceTimeout = useRef<number | null>(null); // Reference to store the timeout ID
+    const [focusedInputIndex, setFocusedInputIndex] = useState<number | null>(null);
+    const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+    const [inputList, setInputList] = useState([
+        {
+            value: '',
+            data: null
+        }
+    ]);
+    const [isFocused, setIsFocused] = useState(false);
+
+
 
     useEffect(() => {
-        /**
-         * Search function
-         *
-         * Fetches location suggestions based on the user's query.
-         */
+
+        if(inputList?.length > 1) {
+            const isValid = inputList.every(data => (data?.data && data?.value));
+            if(isValid) {
+                const data = inputList.map((list: any) => ([list.data.lng, list.data.lat]));
+                handleDrawLine(data);
+            }
+        }
+
+        const handleDocumentClick = (event: MouseEvent) => {
+            // Close suggestions and clear focus when clicking outside the component
+            if (isFocused && searchInputRef.current && !searchInputRef.current.contains(event.target as Node)) {
+                setSuggestions([]);
+                // setFocusedInputIndex(null);
+                setIsFocused(false);
+            }
+        };
+
+        document.addEventListener('click', handleDocumentClick);
+
         const search = async () => {
             try {
-                if (query) {
-                    // Fetch location suggestions using an external API.
+                if (focusedInputIndex !== null && inputList[focusedInputIndex].value) {
+                    // Fetch location suggestions using an external API for the focused input
                     const response = await fetch(
-                        `http://localhost:3002/search?text=${query}`
+                        `http://localhost:3002/search?text=${inputList[focusedInputIndex].value}`
                     );
 
                     const data = await response.json();
-                    const suggestedPlaces = data.map((item: any) => item.city);
+                    // const suggestedPlaces = data.map((item: any) => item.city);
 
-                    setSuggestions(suggestedPlaces);
+                    setSuggestions(data);
                 } else {
                     setSuggestions([]);
                 }
@@ -58,8 +83,9 @@ const SearchBar: React.FC<{ map: maplibregl.Map }> = ({ map }) => {
             if (debounceTimeout.current) {
                 clearTimeout(debounceTimeout.current);
             }
+            document.removeEventListener('click', handleDocumentClick);
         };
-    }, [query]);
+    }, [inputList, focusedInputIndex, isFocused]);
 
     /**
      * Handles input change event
@@ -68,67 +94,78 @@ const SearchBar: React.FC<{ map: maplibregl.Map }> = ({ map }) => {
      *
      * @param {Object} event - The input change event.
      */
-    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setQuery(event.target.value);
+    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
+        const newInputList = [...inputList];
+        newInputList[index].value = event.target.value;
+        setInputList(newInputList);
     };
 
-    /**
-     * Handles suggestion click event
-     *
-     * Sets the query to the clicked suggestion and clears the suggestions list.
-     *
-     * @param {string} suggestion - The clicked suggestion.
-     */
+
     const handleSuggestionClick = (suggestion: any) => {
-        console.log(suggestion);
+        if (focusedInputIndex !== null) {
+            const newInputList = [...inputList];
+            newInputList[focusedInputIndex].value = suggestion.city;
+            newInputList[focusedInputIndex].data = suggestion;
+            setInputList(newInputList);
+        }
+
+        setFocusedInputIndex(null);
+        // Clear the suggestions
         setSuggestions([]);
     };
 
-    /**
-     * Clear the search query and suggestions.
-     */
-    const handleClearClick = () => {
-        // Clear the search query
-        setQuery('');
-
-        // Clear the list of suggestions
-        setSuggestions([]);
+    const handleAddInput = () => {
+        setInputList([...inputList, { value: '', data: null }]);
     };
 
+    const handleInputFocus = (index: number) => {
+        setFocusedInputIndex(index);
+        setIsFocused(true);
+    };
+
+    const handleRemoveInput = (indexToRemove: number) => {
+        setInputList(inputList.filter((_, index) => index !== indexToRemove));
+    };
 
     return (
         <div className="search-container">
             {/* Input for searching locations */}
-            <input
-                type="text"
-                placeholder="Search for a location..."
-                value={query}
-                onChange={handleInputChange}
-                ref={searchInputRef}
-            />
-
-            {/* Clear icon displayed when query is not empty */}
-            {query && (
-                <>
-                    <FontAwesomeIcon
-                        icon={faTimes}
-                        className="clear-icon"
-                        onClick={handleClearClick}
+            {inputList.map((input, Idx) => (
+                <div key={Idx} className="input-container">
+                    <input
+                        key={Idx}
+                        type="text"
+                        value={input.value}
+                        onChange={(event) => handleInputChange(event, Idx)}
+                        placeholder="Search for a location..."
+                        onFocus={() => handleInputFocus(Idx)}
+                        ref={searchInputRef}
                     />
-                    <FontAwesomeIcon
-                        icon={faAdd}
-                        className="add-icon"
-                        onClick={handleClearClick}
-                    />
-                </>
-            )}
+                    {Idx > 0 ? (
+                        <AiFillCloseCircle
+                            size={18}
+                            className="remove-icon"
+                            onClick={() => handleRemoveInput(Idx)}
+                        />
+                    ) : (
+                        <FaLocationDot size={18} />
+                    )}
+                </div>
+            ))}
+            <>
+                <AiFillPlusCircle
+                    size={18}
+                    className="add-icon"
+                    onClick={handleAddInput}
+                />
+            </>
 
             {/* Suggestions list */}
             <ul className="suggestions">
                 {/* Map through suggestions and render each suggestion */}
-                {suggestions.map((suggestion, index) => (
-                    <li key={index} onClick={() => handleSuggestionClick(suggestions)}>
-                        {suggestion}
+                {suggestions.map((suggestion: any, index) => (
+                    <li key={index} onClick={() => handleSuggestionClick(suggestion)}>
+                        {suggestion?.city}
                     </li>
                 ))}
             </ul>

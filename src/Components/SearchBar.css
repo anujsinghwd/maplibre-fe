@@ -14,6 +14,14 @@ input {
     font-size: 16px;
 }
 
+.input-container {
+    display: flex;
+    align-items: center;
+    width: 15rem;
+    gap: 0.3rem;
+    padding: 0.1rem;
+}
+
 .suggestions {
     position: absolute;
     width: 100%;
@@ -50,15 +58,13 @@ input {
     color: red;
 }
 
-/* .suggestions li {
-    position: relative;
-    padding-left: 20px;
-    margin-bottom: 5px;
-  }
-  
-  .suggestions li::before {
-    content: '\2192'; 
-    position: absolute;
-    left: 0;
-    color: #999;
-  } */
+/* Style the remove icon */
+.remove-icon {
+    cursor: pointer;
+    color: #ff5b5b;
+    /* margin-left: 8px; */
+}
+
+.add-icon {
+    cursor: pointer;
+}
