@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import maplibregl, { LngLatLike, Map as MapboxMap } from 'maplibre-gl';
 import { lineString, bbox } from '@turf/turf';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -16,6 +16,7 @@ const Map: React.FC = () => {
     // Create a reference to a HTMLDivElement or null.
     // This reference will be used to hold a reference to a <div> element in the DOM.
     const mapContainer = useRef<HTMLDivElement | null>(null);
+    const [markers, setMarkers] = useState<maplibregl.Marker[]>([]);
 
     // Create a reference to a MapboxMap instance or null.
     // This reference will be used to hold a reference to a MapboxMap object, which represents the MapLibre map instance.
@@ -70,6 +71,7 @@ const Map: React.FC = () => {
             if (mapInstance.current) {
                 mapInstance.current.remove(); // Remove the map instance to prevent memory leaks.
             }
+            removeAllMarkers();
         };
     }, []);
 
@@ -96,13 +98,6 @@ const Map: React.FC = () => {
             } else {
                 lineSource.setData(lineFeature);
             }
-            data.forEach((element: LngLatLike) => {
-                if (mapInstance.current) {
-                    new maplibregl.Marker()
-                        .setLngLat(element)
-                        .addTo(mapInstance.current);
-                }
-            });
 
             const boundingBox = bbox(lineFeature);
             // Convert bounding box coordinates to LngLatBounds
@@ -120,10 +115,45 @@ const Map: React.FC = () => {
         }
     }
 
+    // Function to add a marker to the map and state
+    const addMarker = (element: maplibregl.LngLatLike) => {
+        if (mapInstance.current) {
+            const marker = new maplibregl.Marker()
+                .setLngLat(element)
+                .addTo(mapInstance.current);
+            setMarkers(prevMarkers => [...prevMarkers, marker]);
+        }
+    };
+
+    // Function to remove all markers from the map and state
+    const removeAllMarkers = () => {
+        markers.forEach(marker => marker.remove());
+        setMarkers([]);
+    };
+
+    const handleRemoveLine = () => {
+        // Layer ID that you want to remove
+        const layerIdToRemove = 'line-layer';
+
+        if (mapInstance?.current && mapInstance?.current?.getLayer) {
+            const layerExists = mapInstance.current?.getLayer(layerIdToRemove) !== undefined;
+            // Remove the layer from the map
+            if (layerExists) {
+                mapInstance.current.removeLayer(layerIdToRemove);
+            }
+        }
+    }
+
     return (
         <div>
             <div ref={mapContainer} className="map-container" data-testid="map-container" />
-            <SearchBar handleDrawLine={handleDrawLine} map={mapInstance.current!} /> {/* Add the SearchBar component */}
+            <SearchBar
+                handleDrawLine={handleDrawLine}
+                map={mapInstance.current!}
+                addMarker={addMarker}
+                removeAllMarkers={removeAllMarkers}
+                handleRemoveLine={handleRemoveLine}
+            /> {/* Add the SearchBar component */}
         </div>
 
     );
