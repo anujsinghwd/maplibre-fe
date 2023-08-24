@@ -14,10 +14,10 @@ import maplibregl from 'maplibre-gl';
  */
 const SearchBar: React.FC<{
     map: maplibregl.Map,
-    handleDrawLine: any,
-    addMarker: any,
-    removeAllMarkers: any,
-    handleRemoveLine: any
+    handleDrawLine: (data: [number, number][]) => void,
+    addMarker: (coordinates: [number, number]) => void,
+    removeAllMarkers: () => void,
+    handleRemoveLine: () => void
 }> = ({
     map,
     handleDrawLine,
@@ -44,12 +44,12 @@ const SearchBar: React.FC<{
             const isValid = inputList?.every(data => (data?.data && data?.value));
             if (inputList?.length > 1) {
                 if (isValid) {
-                    const data = inputList.map((list: any) => ([list.data.lng, list.data.lat]));
+                    const data: [number, number][] = inputList.map((list: any) => ([list.data.lng, list.data.lat]));
                     handleDrawLine(data);
                 }
             }
 
-            if(inputList?.length > 0 && inputList?.length < 2 && isValid) {
+            if (inputList?.length > 0 && inputList?.length < 2 && isValid) {
                 handleRemoveLine();
             }
 
@@ -62,6 +62,15 @@ const SearchBar: React.FC<{
                 })
             }
 
+            /**
+             * Handles the document click event to close suggestions and clear focus.
+             *
+             * This function is called when a click event occurs anywhere in the document.
+             * If the search bar component is focused and the click event is outside the component,
+             * suggestions are closed and focus is cleared.
+             *
+             * @param {MouseEvent} event - The mouse click event.
+             */
             const handleDocumentClick = (event: MouseEvent) => {
                 // Close suggestions and clear focus when clicking outside the component
                 if (isFocused && searchInputRef.current && !searchInputRef.current.contains(event.target as Node)) {
@@ -110,7 +119,7 @@ const SearchBar: React.FC<{
                 }
                 document.removeEventListener('click', handleDocumentClick);
             };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+            // eslint-disable-next-line react-hooks/exhaustive-deps
         }, [inputList, focusedInputIndex, isFocused]);
 
         /**
