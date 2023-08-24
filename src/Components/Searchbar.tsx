@@ -151,7 +151,17 @@ const SearchBar: React.FC<{
         };
 
         const handleRemoveInput = (indexToRemove: number) => {
-            setInputList(inputList.filter((_, index) => index !== indexToRemove));
+            removeAllMarkers();
+            const filteredList = inputList.filter((_, index) => index !== indexToRemove);
+            setInputList(filteredList);
+            const isValidSome = filteredList.some(data => (data?.data && data?.value));
+            if (filteredList?.length > 0 && isValidSome) {
+                filteredList.forEach((data: any) => {
+                    if (data?.data?.lat && data?.data?.lng) {
+                        addMarker([data.data.lng, data.data.lat])
+                    }
+                })
+            }
         };
 
         return (
