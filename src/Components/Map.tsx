@@ -140,11 +140,20 @@ const Map: React.FC = () => {
     }
 
     // Function to add a marker to the map and state
-    const addMarker = (element: maplibregl.LngLatLike) => {
+    const addMarker = (element: maplibregl.LngLatLike, name: string) => {
         if (mapInstance.current) {
             const marker = new maplibregl.Marker()
-                .setLngLat(element)
-                .addTo(mapInstance.current);
+                .setLngLat(element);
+            // Create a popup for the marker
+            const popup = new maplibregl.Popup({ closeButton: false }) // You can customize options here
+            .setHTML(`<h5>${name}</h5>`);
+
+            // Associate the popup with the marker
+            marker.setPopup(popup);
+
+            // Add the marker to the map
+            marker.addTo(mapInstance.current);
+            marker.togglePopup();
             setMarkers(prevMarkers => [...prevMarkers, marker]);
         }
     };
@@ -189,7 +198,7 @@ const Map: React.FC = () => {
                         <Switch handleChangeToggle={handleChangeToggle} />
                     </div>
                     {currentData?.length > 1 && distance?.map((val: number, Idx: number) => {
-                        if (Idx < currentData?.length) {
+                        if (currentData[Idx+1]?.data?.lat && Idx < currentData?.length) {
                             return (
                                 <p key={Idx}>
                                     {`Distance between ${currentData[Idx].value} and ${currentData[Idx+1].value}: ${val.toFixed(2)} ${unit}`}

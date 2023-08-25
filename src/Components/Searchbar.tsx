@@ -15,7 +15,7 @@ import { autosuggest } from '../api/services';
 const SearchBar: React.FC<{
     map: maplibregl.Map,
     handleDrawLine: (data: [number, number][]) => void,
-    addMarker: (coordinates: [number, number]) => void,
+    addMarker: (coordinates: [number, number], name: string) => void,
     removeAllMarkers: () => void,
     handleRemoveLine: () => void,
     handleDataChange: (data: any) => void
@@ -40,7 +40,6 @@ const SearchBar: React.FC<{
         const [isFocused, setIsFocused] = useState(false);
 
 
-
         useEffect(() => {
 
             const isValid = inputList?.every(data => (data?.data && data?.value));
@@ -59,7 +58,7 @@ const SearchBar: React.FC<{
             if (inputList?.length > 0 && isValidSome) {
                 inputList.forEach((data: any) => {
                     if (data?.data?.lat && data?.data?.lng) {
-                        addMarker([data.data.lng, data.data.lat])
+                        addMarker([data.data.lng, data.data.lat], data?.value)
                     }
                 })
             }
@@ -167,7 +166,7 @@ const SearchBar: React.FC<{
             if (filteredList?.length > 0 && isValidSome) {
                 filteredList.forEach((data: any) => {
                     if (data?.data?.lat && data?.data?.lng) {
-                        addMarker([data.data.lng, data.data.lat])
+                        addMarker([data.data.lng, data.data.lat], data?.value)
                     }
                 })
             }

@@ -5,12 +5,11 @@ import Map from './Map';
 
 
 // Mock the maplibregl library and its methods
-// In your test setup (e.g., setupTests.ts)
 jest.mock('maplibre-gl', () => ({
     Map: jest.fn()
 }));
 
-test('renders map container and search bar', () => {
+test('renders map container and search bar', async() => {
     render(<Map />);
 
     const mapContainer = screen.getByTestId('map-container');
