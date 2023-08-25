@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { FaLocationDot } from "react-icons/fa6";
 import { AiFillPlusCircle, AiFillCloseCircle } from "react-icons/ai";
 import './SearchBar.css';
-import maplibregl from 'maplibre-gl';
+import { autosuggest } from '../api/services';
 
 /**
  * SearchBar Component
@@ -17,13 +17,15 @@ const SearchBar: React.FC<{
     handleDrawLine: (data: [number, number][]) => void,
     addMarker: (coordinates: [number, number]) => void,
     removeAllMarkers: () => void,
-    handleRemoveLine: () => void
+    handleRemoveLine: () => void,
+    handleDataChange: (data: any) => void
 }> = ({
     map,
     handleDrawLine,
     addMarker,
     removeAllMarkers,
-    handleRemoveLine
+    handleRemoveLine,
+    handleDataChange
 }) => {
         const [suggestions, setSuggestions] = useState<string[]>([]);
         const debounceTimeout = useRef<number | null>(null); // Reference to store the timeout ID
@@ -86,11 +88,7 @@ const SearchBar: React.FC<{
                 try {
                     if (focusedInputIndex !== null && inputList[focusedInputIndex].value) {
                         // Fetch location suggestions using an external API for the focused input
-                        const response = await fetch(
-                            `http://localhost:3002/search?text=${inputList[focusedInputIndex].value}`
-                        );
-
-                        const data = await response.json();
+                        const data = await autosuggest(inputList[focusedInputIndex].value);
                         // const suggestedPlaces = data.map((item: any) => item.city);
 
                         setSuggestions(data);
@@ -133,6 +131,7 @@ const SearchBar: React.FC<{
             const newInputList = [...inputList];
             newInputList[index].value = event.target.value;
             setInputList(newInputList);
+            handleDataChange(newInputList);
         };
 
 
@@ -162,6 +161,7 @@ const SearchBar: React.FC<{
         const handleRemoveInput = (indexToRemove: number) => {
             removeAllMarkers();
             const filteredList = inputList.filter((_, index) => index !== indexToRemove);
+            handleDataChange(filteredList);
             setInputList(filteredList);
             const isValidSome = filteredList.some(data => (data?.data && data?.value));
             if (filteredList?.length > 0 && isValidSome) {

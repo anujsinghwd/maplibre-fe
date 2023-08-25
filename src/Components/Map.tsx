@@ -5,6 +5,8 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import mapConfig from '../constants/map';
 import './map.css';
 import SearchBar from './Searchbar';
+import { distance_matrix } from '../api/services';
+import Switch from './Switch';
 
 /**
  * Map Component
@@ -17,6 +19,9 @@ const Map: React.FC = () => {
     // This reference will be used to hold a reference to a <div> element in the DOM.
     const mapContainer = useRef<HTMLDivElement | null>(null);
     const [markers, setMarkers] = useState<maplibregl.Marker[]>([]);
+    const [distance, setDistance] = useState([]);
+    const [unit, setUnit] = useState<string>('metric');
+    const [currentData, setCurrentData] = useState<any>(null);
 
     // Create a reference to a MapboxMap instance or null.
     // This reference will be used to hold a reference to a MapboxMap object, which represents the MapLibre map instance.
@@ -73,11 +78,16 @@ const Map: React.FC = () => {
             }
             removeAllMarkers();
         };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    useEffect(() => {
+        getDistanceMatrix();
+    }, [currentData, unit]);
 
     const handleDrawLine = (data: any) => {
         if (mapInstance.current) {
+            // setCurrentData(data);
             const lineFeature = lineString(data);
             let lineSource = mapInstance.current.getSource('line-source') as maplibregl.GeoJSONSource | undefined;
 
@@ -116,6 +126,19 @@ const Map: React.FC = () => {
         }
     }
 
+    const getDistanceMatrix = async () => {
+        const latitudes: number[] = [];
+        const longitudes: number[] = [];
+
+        currentData?.forEach((val: any) => {
+            latitudes.push(val?.data?.lat);
+            longitudes.push(val?.data?.lng);
+        });
+
+        const response = await distance_matrix(latitudes, longitudes, unit);
+        setDistance(response);
+    }
+
     // Function to add a marker to the map and state
     const addMarker = (element: maplibregl.LngLatLike) => {
         if (mapInstance.current) {
@@ -145,15 +168,45 @@ const Map: React.FC = () => {
         }
     }
 
+    const handleDataChange = (data: any) => {
+        setCurrentData(data);
+    }
+
+    const handleChangeToggle = (checked: boolean) => {
+        if (checked) {
+            setUnit('metric');
+        } else {
+            setUnit('imperial');
+        }
+    }
+
     return (
         <div>
             <div ref={mapContainer} className="map-container" data-testid="map-container" />
+            {distance?.length > 0 && (
+                <div className='distance-container'>
+                    <div className='switchbox'>
+                        <Switch handleChangeToggle={handleChangeToggle} />
+                    </div>
+                    {currentData?.length > 1 && distance?.map((val: number, Idx: number) => {
+                        if (Idx < currentData?.length) {
+                            return (
+                                <p key={Idx}>
+                                    {`Distance between ${currentData[Idx].value} and ${currentData[Idx+1].value}: ${val.toFixed(2)} ${unit}`}
+                                </p>
+                            )
+                        }
+                    })}
+                </div>
+            )}
+
             <SearchBar
                 handleDrawLine={handleDrawLine}
                 map={mapInstance.current!}
                 addMarker={addMarker}
                 removeAllMarkers={removeAllMarkers}
                 handleRemoveLine={handleRemoveLine}
+                handleDataChange={handleDataChange}
             /> {/* Add the SearchBar component */}
         </div>
 
