@@ -83,6 +83,7 @@ const Map: React.FC = () => {
 
     useEffect(() => {
         getDistanceMatrix();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentData, unit]);
 
     const handleDrawLine = (data: any) => {
