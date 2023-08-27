@@ -40,11 +40,11 @@ const Map: React.FC = () => {
             maxZoom: 22 // The maximum allowed zoom level.
         });
 
-        if (mapInstance.current) {
+        if (mapInstance?.current) {
             // Listen for the 'load' event of the map.
             mapInstance.current.on('load', () => {
                 // Check if the mapInstance reference is valid.
-                if (mapInstance.current) {
+                if (mapInstance?.current) {
                     // Create a GeolocateControl to enable user location tracking.
                     let geolocate = new maplibregl.GeolocateControl({
                         positionOptions: {
@@ -74,7 +74,7 @@ const Map: React.FC = () => {
         // Clean up function to remove the map instance when the component unmounts.
         return () => {
             // Check if the mapInstance reference is valid.
-            if (mapInstance.current) {
+            if (mapInstance?.current) {
                 mapInstance.current.remove(); // Remove the map instance to prevent memory leaks.
             }
             removeAllMarkers();
@@ -88,7 +88,7 @@ const Map: React.FC = () => {
     }, [currentData, unit]);
 
     const handleDrawLine = (data: any) => {
-        if (mapInstance.current) {
+        if (mapInstance?.current) {
             // setCurrentData(data);
             const lineFeature = lineString(data);
             let lineSource = mapInstance.current.getSource('line-source') as maplibregl.GeoJSONSource | undefined;
@@ -213,7 +213,6 @@ const Map: React.FC = () => {
 
             <SearchBar
                 handleDrawLine={handleDrawLine}
-                map={mapInstance.current!}
                 addMarker={addMarker}
                 removeAllMarkers={removeAllMarkers}
                 handleRemoveLine={handleRemoveLine}

@@ -13,14 +13,12 @@ import { autosuggest } from '../api/services';
  * @param {Object} map - The MapLibre map instance.
  */
 const SearchBar: React.FC<{
-    map: maplibregl.Map,
     handleDrawLine: (data: [number, number][]) => void,
     addMarker: (coordinates: [number, number], name: string) => void,
     removeAllMarkers: () => void,
     handleRemoveLine: () => void,
     handleDataChange: (data: any) => void
 }> = ({
-    map,
     handleDrawLine,
     addMarker,
     removeAllMarkers,
