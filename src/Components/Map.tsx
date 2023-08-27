@@ -1,3 +1,4 @@
+/* eslint-disable array-callback-return */
 import React, { useRef, useEffect, useState } from 'react';
 import maplibregl, { Map as MapboxMap } from 'maplibre-gl';
 import { lineString, bbox } from '@turf/turf';
