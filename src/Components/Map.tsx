@@ -157,6 +157,12 @@ const Map: React.FC = () => {
             marker.addTo(mapInstance.current);
             marker.togglePopup();
             setMarkers(prevMarkers => [...prevMarkers, marker]);
+
+            if(currentData?.length === 1 && currentData?.[0]?.data?.lat) {
+                mapInstance.current.flyTo({
+                    center: [currentData?.[0]?.data?.lng, currentData?.[0]?.data?.lat]
+                });
+            }
         }
     };
 
