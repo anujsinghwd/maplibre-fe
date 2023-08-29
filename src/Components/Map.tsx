@@ -82,6 +82,27 @@ const Map: React.FC = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    const getDistanceMatrix = async () => {
+        const latitudes: number[] = [];
+        const longitudes: number[] = [];
+
+        currentData?.forEach((val: any) => {
+            if(val?.data?.lat) {
+                latitudes.push(val?.data?.lat);
+            }
+            if(val?.data?.lng) {
+                longitudes.push(val?.data?.lng);
+            }
+        });
+
+        if(latitudes?.length > 1 && longitudes?.length > 1) {
+            const response = await distance_matrix(latitudes, longitudes, unit);
+            setDistance(response);
+        } else {
+            setDistance([]);
+        }
+    }
+
     useEffect(() => {
         getDistanceMatrix();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -89,7 +110,6 @@ const Map: React.FC = () => {
 
     const handleDrawLine = (data: any) => {
         if (mapInstance?.current) {
-            // setCurrentData(data);
             const lineFeature = lineString(data);
             let lineSource = mapInstance.current.getSource('line-source') as maplibregl.GeoJSONSource | undefined;
 
@@ -126,19 +146,6 @@ const Map: React.FC = () => {
             });
 
         }
-    }
-
-    const getDistanceMatrix = async () => {
-        const latitudes: number[] = [];
-        const longitudes: number[] = [];
-
-        currentData?.forEach((val: any) => {
-            latitudes.push(val?.data?.lat);
-            longitudes.push(val?.data?.lng);
-        });
-
-        const response = await distance_matrix(latitudes, longitudes, unit);
-        setDistance(response);
     }
 
     // Function to add a marker to the map and state

@@ -139,6 +139,7 @@ const SearchBar: React.FC<{
                 newInputList[focusedInputIndex].value = suggestion.city;
                 newInputList[focusedInputIndex].data = suggestion;
                 setInputList(newInputList);
+                handleDataChange(newInputList);
             }
 
             setFocusedInputIndex(null);
